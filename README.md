@@ -1,4 +1,4 @@
-# Web Agent — Session 9 v2
+# Web Agent
 
 A **growing-graph agent runtime** that decomposes user queries into a dynamic DAG of skills, executes them in parallel where possible, persists every step to disk, and produces a replayable HTML report. The flagship demo is a **five-tool AI coding pricing comparison** (GitHub Copilot, Cursor, Claude Code, Windsurf, Tabnine) using the Browser skill’s cost cascade and a comparator → formatter pipeline.
 
@@ -29,7 +29,7 @@ A **growing-graph agent runtime** that decomposes user queries into a dynamic DA
 ## Repository layout
 
 ```
-Session 9 v2/
+
 ├── README.md                 ← this file
 ├── DESIGN_PLAN.md            ← full design rationale and file-status map
 ├── .env.example              ← gateway provider keys (copy to .env)
@@ -94,10 +94,10 @@ flowchart TB
     end
 
     subgraph Gateway["llm_gatewayV9 :8109"]
-        Chat[/v1/chat]
-        Vision[/v1/vision]
-        Cost[/v1/cost/by_agent]
-        Embed[/v1/embed]
+        Chat["POST /v1/chat"]
+        Vision["POST /v1/vision"]
+        Cost["GET /v1/cost/by_agent"]
+        Embed["POST /v1/embed"]
     end
 
     subgraph External
