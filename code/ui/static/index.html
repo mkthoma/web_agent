@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Web Agent UI</title>
+  <style>
+    :root {
+      --bg: #0f1419; --panel: #1a2332; --panel2: #131b27; --border: #2d3a4d;
+      --text: #e7ecf3; --muted: #8b9cb3; --accent: #3b82f6;
+      --ok: #22c55e; --bad: #ef4444; --warn: #f0b429;
+      --extract: #3fb950; --a11y: #58a6ff; --vision: #bc8cff; --blocked: #f85149;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    header { display: flex; align-items: center; gap: 1rem; padding: .7rem 1rem; border-bottom: 1px solid var(--border); background: var(--panel); }
+    header .title { font-weight: 600; }
+    header .spacer { flex: 1; }
+    .badge { display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .75rem; border-radius: 999px; border: 1px solid var(--border); text-decoration: none; color: var(--text); font-size: .85rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+    .dot.online { background: var(--ok); }
+    .layout { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 53px); }
+    aside { border-right: 1px solid var(--border); overflow-y: auto; padding: .5rem; background: var(--panel2); }
+    aside h3 { margin: .4rem .25rem .6rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    main { display: flex; flex-direction: column; min-width: 0; }
+
+    /* top-level tabs */
+    .tabbar { display: flex; gap: .25rem; padding: .5rem .75rem 0; border-bottom: 1px solid var(--border); background: var(--panel); flex-wrap: wrap; }
+    .tabbar button { background: transparent; color: var(--muted); border: 1px solid transparent; border-bottom: none; padding: .5rem .9rem; border-radius: 8px 8px 0 0; cursor: pointer; font-size: .88rem; }
+    .tabbar button:hover { color: var(--text); }
+    .tabbar button.active { color: var(--text); background: var(--bg); border-color: var(--border); }
+    .tabbar .count { color: var(--muted); font-size: .72rem; }
+    .panel { display: none; flex: 1; min-height: 0; overflow: auto; padding: 1rem 1.25rem; }
+    .panel.active { display: block; }
+
+    /* report sub-tabs */
+    .subtabs { display: flex; gap: .3rem; flex-wrap: wrap; margin: 0 0 1rem; padding-bottom: .6rem; border-bottom: 1px solid var(--border); }
+    .subtabs button { background: var(--panel); color: var(--muted); border: 1px solid var(--border); padding: .35rem .7rem; border-radius: 999px; cursor: pointer; font-size: .78rem; }
+    .subtabs button.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+    .subpanel { display: none; }
+    .subpanel.active { display: block; }
+
+    .report-head { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: .75rem; }
+    .report-head .sid { font-family: ui-monospace, monospace; color: var(--muted); font-size: .85rem; }
+    .report-head .spacer { flex: 1; }
+
+    .card { border: 1px solid var(--border); border-radius: 8px; margin-bottom: .5rem; background: var(--panel); }
+    .card-head { display: flex; align-items: center; gap: .5rem; padding: .6rem .75rem; cursor: pointer; user-select: none; }
+    .card-head:hover { background: rgba(255,255,255,.03); }
+    .card-body { display: none; padding: 0 .75rem .75rem; font-size: .85rem; color: var(--muted); }
+    .card.open .card-body { display: block; }
+    .query-text { white-space: pre-wrap; background: rgba(0,0,0,.25); padding: .5rem; border-radius: 4px; margin: .5rem 0; color: var(--text); font-size: .8rem; }
+
+    button.primary { background: var(--accent); color: #fff; border: none; padding: .45rem .9rem; border-radius: 6px; cursor: pointer; font-size: .85rem; }
+    button.primary:disabled { opacity: .5; cursor: not-allowed; }
+    button.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); padding: .25rem .55rem; font-size: .75rem; border-radius: 6px; cursor: pointer; }
+    button.danger:hover:not(:disabled) { background: rgba(239,68,68,.12); }
+    button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: .3rem .6rem; font-size: .78rem; border-radius: 6px; cursor: pointer; }
+    button.ghost:hover { color: var(--text); }
+    a { color: var(--accent); }
+    a.btnlink { display: inline-block; padding: .3rem .6rem; border: 1px solid var(--accent); border-radius: 6px; text-decoration: none; font-size: .78rem; }
+
+    pre#log { margin: 0; font-family: ui-monospace, monospace; font-size: .78rem; white-space: pre-wrap; word-break: break-word; background: #0b1018; border: 1px solid var(--border); border-radius: 8px; padding: .9rem; min-height: 60vh; }
+    pre.block { white-space: pre-wrap; word-break: break-word; background: #0b1018; border: 1px solid var(--border); border-radius: 8px; padding: .7rem; font-size: .8rem; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th, td { text-align: left; padding: .45rem .55rem; border: 1px solid var(--border); vertical-align: top; }
+    th { background: var(--panel2); color: var(--muted); }
+    h2.section { font-size: 1.05rem; margin: 0 0 .75rem; }
+    .muted { color: var(--muted); }
+    .warn { color: var(--warn); }
+    .goal { font-size: 1.1rem; line-height: 1.5; }
+
+    .pill { padding: .12rem .55rem; border-radius: 999px; font-size: .74rem; color: #0d1117; font-weight: 700; }
+    .pill-extract { background: var(--extract); } .pill-a11y { background: var(--a11y); }
+    .pill-vision { background: var(--vision); } .pill-blocked { background: var(--blocked); color:#fff; }
+    .pill-deterministic { background: var(--a11y); } .pill-unknown { background: var(--muted); }
+
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    figure { margin: 0; background: #0b1018; border: 1px solid var(--border); border-radius: 8px; padding: .5rem; }
+    figure img { width: 100%; border-radius: 4px; border: 1px solid var(--border); cursor: zoom-in; }
+    figcaption { color: var(--muted); font-size: .76rem; margin: .4rem 0 .2rem; word-break: break-all; }
+    .mermaid { background: #0b1018; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow: auto; }
+    .stat { display: inline-block; margin-right: 1.25rem; }
+    .stat b { color: var(--text); font-size: 1.05rem; }
+    details summary { cursor: pointer; color: var(--accent); margin: .3rem 0; }
+    .empty { color: var(--muted); padding: 1rem; }
+    .toolbar { display: flex; align-items: center; gap: .6rem; margin-bottom: .75rem; flex-wrap: wrap; }
+    .toolbar .spacer { flex: 1; }
+    .custom-query { margin-bottom: 1rem; }
+    .custom-query textarea {
+      width: 100%; min-height: 5.5rem; resize: vertical; margin-bottom: .5rem;
+      padding: .55rem .65rem; border-radius: 6px; border: 1px solid var(--border);
+      background: rgba(0,0,0,.25); color: var(--text); font: inherit; font-size: .82rem; line-height: 1.45;
+    }
+    .custom-query textarea:focus { outline: none; border-color: var(--accent); }
+    .custom-query textarea::placeholder { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <a id="gw-badge" class="badge" href="http://localhost:8109/" target="_blank" rel="noopener">
+      <span id="gw-dot" class="dot"></span>
+      <span id="gw-label">Gateway: checking…</span>
+    </a>
+    <span class="title">Web Agent</span>
+    <span class="spacer"></span>
+    <span class="muted" style="font-size:.8rem;">:8090</span>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <h3>Custom query</h3>
+      <div class="custom-query">
+        <textarea id="custom-query" rows="4" placeholder="Type your own query…"></textarea>
+        <button type="button" class="primary" id="run-custom">Run Custom Query</button>
+      </div>
+      <h3>Predefined queries</h3>
+      <div id="queries"></div>
+    </aside>
+
+    <main>
+      <div class="tabbar" id="main-tabs">
+        <button data-tab="log" class="active">Live Log</button>
+        <button data-tab="report">Report</button>
+        <button data-tab="history">Past Runs <span class="count" id="hist-count"></span></button>
+      </div>
+
+      <!-- LIVE LOG -->
+      <section class="panel active" id="panel-log">
+        <pre id="log">Enter a custom query or pick a predefined one on the left, then click Run.</pre>
+      </section>
+
+      <!-- REPORT (8-element tabbed view) -->
+      <section class="panel" id="panel-report">
+        <div class="report-head">
+          <strong>Replay report</strong>
+          <span class="sid" id="report-sid">— no session selected —</span>
+          <span class="spacer"></span>
+          <a id="report-open" class="btnlink" href="#" target="_blank" rel="noopener" hidden>Open standalone REPORT.html ↗</a>
+        </div>
+        <div id="report-empty" class="empty">Run a query, or open a past run, to populate the eight replay elements here.</div>
+        <div id="report-body" hidden>
+          <div class="subtabs" id="report-subtabs">
+            <button data-sub="goal" class="active">1 · Goal</button>
+            <button data-sub="dag">2 · Planner DAG</button>
+            <button data-sub="path">3 · Browser Path</button>
+            <button data-sub="actions">4 · Browser Actions</button>
+            <button data-sub="logs">5 · Page Logs</button>
+            <button data-sub="extracted">6 · Extracted Data</button>
+            <button data-sub="final">7 · Final Table</button>
+            <button data-sub="cost">8 · Turns &amp; Cost</button>
+          </div>
+          <div class="subpanel active" id="sub-goal"></div>
+          <div class="subpanel" id="sub-dag"></div>
+          <div class="subpanel" id="sub-path"></div>
+          <div class="subpanel" id="sub-actions"></div>
+          <div class="subpanel" id="sub-logs"></div>
+          <div class="subpanel" id="sub-extracted"></div>
+          <div class="subpanel" id="sub-final"></div>
+          <div class="subpanel" id="sub-cost"></div>
+        </div>
+      </section>
+
+      <!-- PAST RUNS -->
+      <section class="panel" id="panel-history">
+        <div class="toolbar">
+          <h2 class="section" style="margin:0;">Past runs</h2>
+          <span class="spacer"></span>
+          <button type="button" class="ghost" id="refresh-btn">Refresh</button>
+          <button type="button" class="ghost" id="clear-all-btn" title="Delete all session folders and reports">Clear all</button>
+        </div>
+        <table>
+          <thead><tr><th>Date / time</th><th>Session</th><th>Query</th><th>Report</th><th></th><th></th></tr></thead>
+          <tbody id="history"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    let mermaidApi = null;
+    async function ensureMermaid() {
+      if (mermaidApi) return mermaidApi;
+      try {
+        const m = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+        m.default.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+        mermaidApi = m.default;
+      } catch (e) { mermaidApi = null; }
+      return mermaidApi;
+    }
+    window.__ensureMermaid = ensureMermaid;
+  </script>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const logEl = $('log');
+    const queriesEl = $('queries');
+    const historyEl = $('history');
+    const gwDot = $('gw-dot'), gwLabel = $('gw-label');
+    let running = false;
+    let currentSession = null;
+    let dagRendered = false;
+
+    const esc = s => String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    /* ---------- top-level tabs ---------- */
+    document.querySelectorAll('#main-tabs button').forEach(btn => {
+      btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+    });
+    function activateTab(name) {
+      document.querySelectorAll('#main-tabs button').forEach(b =>
+        b.classList.toggle('active', b.dataset.tab === name));
+      document.querySelectorAll('.panel').forEach(p =>
+        p.classList.toggle('active', p.id === 'panel-' + name));
+    }
+
+    /* ---------- report sub-tabs ---------- */
+    document.querySelectorAll('#report-subtabs button').forEach(btn => {
+      btn.addEventListener('click', () => activateSub(btn.dataset.sub));
+    });
+    function activateSub(name) {
+      document.querySelectorAll('#report-subtabs button').forEach(b =>
+        b.classList.toggle('active', b.dataset.sub === name));
+      document.querySelectorAll('.subpanel').forEach(p =>
+        p.classList.toggle('active', p.id === 'sub-' + name));
+      if (name === 'dag') renderDag();
+    }
+
+    /* ---------- gateway badge ---------- */
+    async function pollGateway() {
+      try {
+        const j = await (await fetch('/api/gateway/status')).json();
+        gwDot.classList.toggle('online', j.online);
+        gwLabel.textContent = j.online ? 'Gateway: Online' : 'Gateway: Offline';
+      } catch { gwDot.classList.remove('online'); gwLabel.textContent = 'Gateway: Offline'; }
+    }
+
+    /* ---------- query catalog ---------- */
+    async function loadQueries() {
+      const queries = await (await fetch('/api/queries')).json();
+      queriesEl.innerHTML = queries.map((q, i) => `
+        <div class="card ${i === 0 ? 'open' : ''}" data-id="${esc(q.id)}">
+          <div class="card-head"><span>▶</span><strong>${esc(q.title)}</strong></div>
+          <div class="card-body">
+            <p>${esc(q.description || '')}</p>
+            <div class="query-text">${esc(q.query)}</div>
+            <button type="button" class="primary" data-run="${esc(q.id)}">Run Query</button>
+          </div>
+        </div>`).join('');
+      queriesEl.querySelectorAll('.card-head').forEach(h =>
+        h.addEventListener('click', () => h.parentElement.classList.toggle('open')));
+      queriesEl.querySelectorAll('[data-run]').forEach(b =>
+        b.addEventListener('click', e => { e.stopPropagation(); runQuery(b.dataset.run); }));
+    }
+
+    /* ---------- date formatting ---------- */
+    function fmtDate(epoch) {
+      if (!epoch) return '—';
+      const d = new Date(epoch * 1000);
+      if (isNaN(d)) return '—';
+      return d.toLocaleString(undefined, { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    }
+
+    /* ---------- past runs ---------- */
+    async function loadHistory() {
+      const sessions = await (await fetch('/api/sessions')).json();
+      $('hist-count').textContent = sessions.length ? `(${sessions.length})` : '';
+      historyEl.innerHTML = sessions.map(s => `
+        <tr>
+          <td style="white-space:nowrap;">${esc(fmtDate(s.created_at))}</td>
+          <td><code>${esc(s.session_id)}</code></td>
+          <td>${esc(s.query || '')}</td>
+          <td>${s.has_report
+            ? `<a href="/api/sessions/${encodeURIComponent(s.session_id)}/report.html" target="_blank" rel="noopener">Open ↗</a>`
+            : '<span class="muted">—</span>'}</td>
+          <td><button type="button" class="ghost" data-view="${esc(s.session_id)}">View</button></td>
+          <td><button type="button" class="danger" data-clear="${esc(s.session_id)}">Clear</button></td>
+        </tr>`).join('') || '<tr><td colspan="6" class="muted">No sessions yet.</td></tr>';
+      historyEl.querySelectorAll('[data-clear]').forEach(b =>
+        b.addEventListener('click', () => deleteSession(b.dataset.clear)));
+      historyEl.querySelectorAll('[data-view]').forEach(b =>
+        b.addEventListener('click', () => { activateTab('report'); loadReport(b.dataset.view); }));
+      $('clear-all-btn').disabled = sessions.length === 0;
+    }
+
+    async function deleteSession(sid) {
+      if (!confirm(`Delete session ${sid} and its report? This cannot be undone.`)) return;
+      const r = await fetch(`/api/sessions/${encodeURIComponent(sid)}`, { method: 'DELETE' });
+      if (!r.ok) { alert((await r.json().catch(()=>({}))).detail || 'Failed to delete'); return; }
+      if (currentSession === sid) resetReport();
+      await loadHistory();
+    }
+    $('clear-all-btn').addEventListener('click', async () => {
+      if (!confirm('Delete ALL past sessions and reports? This cannot be undone.')) return;
+      if (!(await fetch('/api/sessions', { method: 'DELETE' })).ok) { alert('Failed to clear'); return; }
+      resetReport(); await loadHistory();
+    });
+    $('refresh-btn').addEventListener('click', loadHistory);
+
+    /* ---------- run a query (SSE → live log) ---------- */
+    function handleSse(rawBuf, flush) {
+      const parts = rawBuf.replace(/\r\n/g, '\n').split('\n\n');
+      const rest = flush ? '' : (parts.pop() || '');
+      for (const part of parts) {
+        const line = part.split('\n').find(l => l.startsWith('data: '));
+        if (!line) continue;
+        let msg; try { msg = JSON.parse(line.slice(6)); } catch { continue; }
+        if (msg.type === 'started') logEl.textContent = 'Run started…\n';
+        if (msg.type === 'log') logEl.textContent += msg.line;
+        if (msg.type === 'error') logEl.textContent += `\n[error] ${msg.message}\n`;
+        if (msg.type === 'done') {
+          logEl.textContent += `\n[done] exit=${msg.exit_code} session=${msg.session_id || '?'}\n`;
+          if (msg.session_id) { loadReport(msg.session_id); activateTab('report'); }
+          loadHistory();
+        }
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      return rest;
+    }
+
+    function setRunControlsDisabled(disabled) {
+      queriesEl.querySelectorAll('button').forEach(b => { b.disabled = disabled; });
+      $('run-custom').disabled = disabled;
+      $('custom-query').disabled = disabled;
+    }
+
+    async function startRun(payload) {
+      if (running) return;
+      running = true;
+      setRunControlsDisabled(true);
+      logEl.textContent = 'Starting…';
+      activateTab('log');
+      try {
+        const r = await fetch('/api/run', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          logEl.textContent += `\n[error] ${err.detail || r.statusText}\n`;
+          return;
+        }
+        const reader = r.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          buf = handleSse(buf, false);
+        }
+        handleSse(buf, true);
+      } catch (e) {
+        logEl.textContent += `\n[error] ${e}\n`;
+      } finally {
+        running = false;
+        setRunControlsDisabled(false);
+        loadHistory();
+      }
+    }
+
+    function runQuery(queryId) {
+      return startRun({ query_id: queryId });
+    }
+
+    function runCustomQuery() {
+      const text = $('custom-query').value.trim();
+      if (!text) {
+        alert('Enter a query first.');
+        return;
+      }
+      return startRun({ query: text });
+    }
+
+    $('run-custom').addEventListener('click', runCustomQuery);
+    $('custom-query').addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        runCustomQuery();
+      }
+    });
+
+    /* ---------- report: the 8 elements ---------- */
+    let reportData = null;
+
+    function resetReport() {
+      currentSession = null; reportData = null;
+      $('report-sid').textContent = '— no session selected —';
+      $('report-open').hidden = true;
+      $('report-body').hidden = true;
+      $('report-empty').hidden = false;
+    }
+
+    async function loadReport(sid) {
+      currentSession = sid;
+      $('report-sid').textContent = sid;
+      $('report-empty').textContent = 'Loading report…';
+      $('report-empty').hidden = false;
+      $('report-body').hidden = true;
+      let data;
+      try {
+        data = await (await fetch(`/api/sessions/${encodeURIComponent(sid)}/report`)).json();
+      } catch (e) {
+        $('report-empty').textContent = 'Failed to load report: ' + e; return;
+      }
+      reportData = data;
+      const openLink = $('report-open');
+      openLink.href = `/api/sessions/${encodeURIComponent(sid)}/report.html?t=${Date.now()}`;
+      openLink.hidden = false;
+      $('report-empty').hidden = true;
+      $('report-body').hidden = false;
+      dagRendered = false;
+      renderGoal(); renderPath(); renderActions(); renderLogs();
+      renderExtracted(); renderFinal(); renderCost(); prepDag();
+      activateSub('goal');
+    }
+
+    function renderGoal() {
+      $('sub-goal').innerHTML =
+        `<h2 class="section">1 · Original user goal</h2>
+         <p class="goal">${esc(reportData['1_user_goal'] || '(none recorded)')}</p>`;
+    }
+
+    function prepDag() {
+      const mer = reportData['2_planner_dag_mermaid'] || '';
+      const txt = reportData['2_planner_dag_text'] || '';
+      $('sub-dag').innerHTML =
+        `<h2 class="section">2 · Planner DAG</h2>
+         <div class="mermaid" id="dag-graph">${esc(mer)}</div>
+         <details><summary>DAG as text (edges)</summary><pre class="block">${esc(txt)}</pre></details>`;
+    }
+    async function renderDag() {
+      if (dagRendered) return;
+      const host = $('dag-graph');
+      if (!host) return;
+      const m = await window.__ensureMermaid();
+      if (!m) { host.innerHTML = '<span class="muted">Mermaid unavailable (offline). See text below.</span>'; dagRendered = true; return; }
+      const code = host.textContent;
+      host.removeAttribute('data-processed');
+      host.innerHTML = code;
+      try { await m.run({ nodes: [host] }); } catch (e) { host.innerHTML = '<span class="muted">DAG render error.</span>'; }
+      dagRendered = true;
+    }
+
+    function pillClass(p) {
+      return { extract:'pill-extract', a11y:'pill-a11y', vision:'pill-vision',
+               blocked:'pill-blocked', deterministic:'pill-deterministic' }[p] || 'pill-unknown';
+    }
+
+    function renderPath() {
+      const nodes = reportData['3_browser_paths'] || [];
+      if (!nodes.length) { $('sub-path').innerHTML = '<h2 class="section">3 · Browser path chosen</h2><p class="empty">No browser nodes in this run.</p>'; return; }
+      const rows = nodes.map(b => `
+        <tr>
+          <td><code>${esc(b.node_id)}</code></td>
+          <td><span class="pill ${pillClass(b.path)}">${esc(b.path)}</span></td>
+          <td>${esc(b.turns)}</td>
+          <td>${(b.actions||[]).length}</td>
+          <td class="muted" style="word-break:break-all;">${esc(b.final_url || b.url || '')}</td>
+          <td>${b.error_code ? `<span class="pill pill-blocked">${esc(b.error_code)}</span>` : '<span class="muted">—</span>'}</td>
+        </tr>`).join('');
+      $('sub-path').innerHTML =
+        `<h2 class="section">3 · Browser path chosen <span class="muted" style="font-size:.8rem;">extract / deterministic / a11y / vision / blocked</span></h2>
+         <table><thead><tr><th>node</th><th>path</th><th>turns</th><th>actions</th><th>final url</th><th>error</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    function renderActions() {
+      const items = reportData['4_browser_actions'] || [];
+      const total = items.reduce((n, i) => n + (i.actions||[]).length, 0);
+      if (!items.length) { $('sub-actions').innerHTML = '<h2 class="section">4 · Browser actions taken</h2><p class="empty">No browser actions in this run.</p>'; return; }
+      const blocks = items.map(it => `
+        <details ${items.length <= 2 ? 'open' : ''}>
+          <summary><code>${esc(it.node_id)}</code> — ${(it.actions||[]).length} turn(s)</summary>
+          <pre class="block">${esc(JSON.stringify(it.actions || [], null, 2))}</pre>
+        </details>`).join('');
+      $('sub-actions').innerHTML =
+        `<h2 class="section">4 · Browser actions taken <span class="muted" style="font-size:.8rem;">${total} turn-record(s)</span></h2>${blocks}`;
+    }
+
+    function renderLogs() {
+      const arts = reportData['5_page_state_logs'] || [];
+      const fbs = reportData['5_browser_content_fallbacks'] || [];
+      let html = '<h2 class="section">5 · Screenshots / page-state logs</h2>';
+      if (arts.length) {
+        html += '<div class="gallery">' + arts.map(a => {
+          const img = a.raw_rel ? `/api/sessions/${encodeURIComponent(currentSession)}/artifacts/${a.raw_rel}` : '';
+          const legend = a.legend_rel ? `<a href="/api/sessions/${encodeURIComponent(currentSession)}/artifacts/${a.legend_rel}" target="_blank" rel="noopener">legend ↗</a>` : '';
+          const marked = a.marked_rel ? ` · <a href="/api/sessions/${encodeURIComponent(currentSession)}/artifacts/${a.marked_rel}" target="_blank" rel="noopener">marked ↗</a>` : '';
+          return `<figure>
+            ${img ? `<a href="${img}" target="_blank" rel="noopener"><img src="${img}" alt="${esc(a.path)}" loading="lazy"/></a>` : ''}
+            <figcaption>${esc(a.layer || '')} · ${esc(a.turn || a.path)}</figcaption>
+            <div style="font-size:.76rem;">${legend}${marked}</div>
+          </figure>`;
+        }).join('') + '</div>';
+      }
+      const fbWith = fbs.filter(f => f.content);
+      if (fbWith.length) {
+        html += '<h3 class="muted" style="margin-top:1rem;">Extract-path page text (no screenshot)</h3>';
+        html += fbWith.map(f => `<details><summary><code>${esc(f.node_id)}</code> page text</summary><pre class="block">${esc(f.content)}</pre></details>`).join('');
+      }
+      if (!arts.length && !fbWith.length) html += '<p class="empty">No screenshots or page-state logs (extract-only run, or no browser nodes).</p>';
+      $('sub-logs').innerHTML = html;
+    }
+
+    function renderExtracted() {
+      const data = reportData['6_extracted_data'] || [];
+      if (!data.length) { $('sub-extracted').innerHTML = '<h2 class="section">6 · Extracted data</h2><p class="empty">No distiller output in this run.</p>'; return; }
+      const blocks = data.map(d => {
+        const fields = d.fields || {};
+        const label = fields.tool || fields.item || d.node_id;
+        return `<details open><summary><code>${esc(d.node_id)}</code> — ${esc(label)}</summary>
+          <pre class="block">${esc(JSON.stringify(fields, null, 2))}</pre></details>`;
+      }).join('');
+      $('sub-extracted').innerHTML = `<h2 class="section">6 · Extracted data <span class="muted" style="font-size:.8rem;">distiller fields</span></h2>${blocks}`;
+    }
+
+    function mdTableToHtml(text) {
+      const lines = text.trim().split('\n').map(l => l.trim()).filter(Boolean);
+      const start = lines.findIndex(l => l.startsWith('|'));
+      if (start < 0) return null;
+      const rows = lines.slice(start).filter(l => l.startsWith('|'));
+      if (rows.length < 2) return null;
+      const cells = r => r.replace(/^\|/,'').replace(/\|$/,'').split('|').map(c => c.trim());
+      const header = cells(rows[0]);
+      const isSep = /^\|?[\s:\-|]+\|?$/.test(rows[1]) && rows[1].includes('-');
+      const body = rows.slice(isSep ? 2 : 1).map(cells).filter(c => c.length === header.length);
+      if (!body.length) return null;
+      return `<table><thead><tr>${header.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+        <tbody>${body.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    }
+
+    function renderFinal() {
+      const ans = reportData['7_final_table'] || '';
+      let html = '<h2 class="section">7 · Final comparison table</h2>';
+      if (reportData['7_final_table_incomplete'])
+        html += '<p class="warn">⚠ Partial run — the formatter did not complete. Rebuilt from comparator/distiller/browser artifacts.</p>';
+      if (!ans) { html += '<p class="empty">No final answer produced.</p>'; $('sub-final').innerHTML = html; return; }
+      const table = mdTableToHtml(ans);
+      html += table ? table : `<pre class="block">${esc(ans)}</pre>`;
+      $('sub-final').innerHTML = html;
+    }
+
+    function renderCost() {
+      const r = reportData;
+      const wall = (typeof r['8_wall_clock_s'] === 'number') ? r['8_wall_clock_s'].toFixed(1) + 's' : 'n/a';
+      let html = `<h2 class="section">8 · Turn count &amp; cost summary</h2>
+        <div style="margin-bottom:1rem;">
+          <span class="stat">Nodes <b>${r['8_node_count'] ?? 0}</b></span>
+          <span class="stat">Browser turns <b>${r['8_total_browser_turns'] ?? 0}</b></span>
+          <span class="stat">Browser actions <b>${r['8_browser_action_count'] ?? 0}</b></span>
+          <span class="stat">Wall-clock <b>${wall}</b></span>
+        </div>`;
+      const cost = r['8_cost_by_agent'] || {};
+      const rows = [];
+      for (const agent of Object.keys(cost).sort()) {
+        const entries = cost[agent];
+        if (!Array.isArray(entries)) continue;
+        for (const e of entries) {
+          let d = e.dollars;
+          try { d = Number(d).toFixed(6).replace(/0+$/,'').replace(/\.$/,''); } catch {}
+          rows.push(`<tr><td>${esc(agent)}</td><td>${esc(e.provider||'')}</td><td>${e.calls||0}</td>
+            <td>${e.in_tok||0}</td><td>${e.out_tok||0}</td><td>${esc(d)}</td></tr>`);
+        }
+      }
+      html += rows.length
+        ? `<table><thead><tr><th>agent</th><th>provider</th><th>calls</th><th>in tok</th><th>out tok</th><th>$</th></tr></thead><tbody>${rows.join('')}</tbody></table>`
+        : '<p class="muted">No cost ledger (gateway offline, or no calls recorded for this session).</p>';
+      $('sub-cost').innerHTML = html;
+    }
+
+    /* ---------- boot ---------- */
+    pollGateway(); setInterval(pollGateway, 15000);
+    loadQueries();
+    loadHistory();
+  </script>
+</body>
+</html>

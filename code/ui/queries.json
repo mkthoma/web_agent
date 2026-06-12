@@ -1,0 +1,44 @@
+[
+  {
+    "id": "comparison",
+    "title": "Compare 5 AI coding tools",
+    "description": "Primary assignment: pricing pages for Copilot, Cursor, Claude Code, Windsurf, Tabnine. Exercises Browser cascade + distiller + comparator + formatter.",
+    "query": "Compare GitHub Copilot, Cursor, Claude Code, Windsurf, and Tabnine as AI coding tools. For each, open its pricing page, switch the billing toggle if present, and report the free plan, the cheapest paid plan with its price, and three headline features. Give me a single comparison table."
+  },
+  {
+    "id": "hello",
+    "title": "Hello",
+    "description": "Smallest DAG: planner → formatter. No research needed.",
+    "query": "hello"
+  },
+  {
+    "id": "shannon",
+    "title": "Claude Shannon",
+    "description": "Single-item researcher query with USER_QUERY in inputs.",
+    "query": "When was Claude Shannon born and when did he die? Name three of his contributions to information theory."
+  },
+  {
+    "id": "populations",
+    "title": "City populations",
+    "description": "Parallel fan-out: three researchers scoped by metadata.question.",
+    "query": "Find the populations of London, Paris, Berlin and tell me which two are closest in size."
+  },
+  {
+    "id": "structured",
+    "title": "Structured comparison",
+    "description": "Distiller → auto-critic → formatter chain.",
+    "query": "Compare the populations of Mumbai, Cairo, and Lagos and identify which is growing fastest. Return structured fields per city."
+  },
+  {
+    "id": "fail",
+    "title": "Graceful fail",
+    "description": "Planner routes to formatter with honest failure for impossible input.",
+    "query": "Summarise the contents of /nonexistent/path.txt for me."
+  },
+  {
+    "id": "browser",
+    "title": "Hugging Face browser",
+    "description": "Browser skill end-to-end: extract → a11y → vision cascade on HF models page.",
+    "query": "What are the top 3 most-liked open-source LLM releases on Hugging Face from the past week? For each give model name, parameter count, and one-line description."
+  }
+]

@@ -1,0 +1,8 @@
+# Local venv and caches (also covered by root .gitignore)
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Gateway SQLite cache / usage DB (recreated on startup)
+gateway_v*.db
+*.db

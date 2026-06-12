@@ -1,0 +1,55 @@
+# ─── Secrets / environment ───────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+code/.env
+code/.env.*
+!code/.env.example
+
+# ─── Logs & local runtime output ─────────────────────────────────────────────
+logs/
+*.log
+
+# ─── Agent / gateway runtime state ───────────────────────────────────────────
+code/state/
+code/usage.json
+llm_gatewayV9/gateway_v*.db
+llm_gatewayV9/*.db
+
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.Python
+
+# ─── Test / tooling caches ───────────────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# ─── IDE / OS ────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── Generated / local-only tooling graphs ───────────────────────────────────
+.code-review-graph/
+graphify-out/
+
+# ─── Optional: large generated benchmark dumps (uncomment if you prefer) ─────
+# llm_gatewayV9/scripts/benchmark_nvidia_results.json

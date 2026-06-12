@@ -1,0 +1,22 @@
+# V8 agent → provider preferences. Map a skill name (the `agent` field on
+# /v1/chat) to a preferred provider. Callers can still override per-call with
+# provider=... (hard pin — no failover).
+#
+# Preferences are SOFT: the gateway tries the preferred provider first, then
+# walks the failover ring (groq → nvidia → gemini → …) on 5xx / cooldown.
+#
+# Load-spreading rationale (comparison runs fan out many browser + distiller
+# calls in parallel). Gemini stays on strict-JSON roles that need flash-lite;
+# NVIDIA (40 RPM) and Groq (30 RPM) absorb bulk reasoning / fan-out work.
+
+planner: gemini
+formatter: gemini
+critic: groq
+researcher: nvidia
+distiller: groq
+comparator: nvidia
+summariser: nvidia
+coder: nvidia
+browser: nvidia
+retriever: github
+sandbox_executor: github

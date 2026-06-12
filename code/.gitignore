@@ -1,0 +1,26 @@
+# secrets / env
+.env
+.env.*
+!.env.example
+
+# runtime state (sessions, memory, FAISS sidecars)
+state/
+usage.json
+
+# sandbox outputs (keep papers/ source material if added manually)
+sandbox/output/
+sandbox/*.faiss
+sandbox/*.pkl
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+
+# os / editor
+.DS_Store
+Thumbs.db

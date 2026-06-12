@@ -1,0 +1,80 @@
+[
+  {
+    "model": "mistralai/mistral-medium-3.5-128b",
+    "provider": "nvidia",
+    "available": true,
+    "planner_pass_rate": 1.0,
+    "distiller_pass_rate": 1.0,
+    "median_planner_ms": 35504.821399998036,
+    "median_distiller_ms": 14882.562599999801,
+    "burst_ok": 6,
+    "burst_total": 6,
+    "composite_score": 1.001174374000002,
+    "notes": ""
+  },
+  {
+    "model": "deepseek-ai/deepseek-v4-flash",
+    "provider": "nvidia",
+    "available": true,
+    "planner_pass_rate": 1.0,
+    "distiller_pass_rate": 1.0,
+    "median_planner_ms": 212071.79929999984,
+    "median_distiller_ms": 73927.70160000146,
+    "burst_ok": 0,
+    "burst_total": 6,
+    "composite_score": 0.8,
+    "notes": ""
+  },
+  {
+    "model": "minimaxai/minimax-m2.7",
+    "provider": "nvidia",
+    "available": true,
+    "planner_pass_rate": 1.0,
+    "distiller_pass_rate": 0.0,
+    "median_planner_ms": 166071.61629999973,
+    "median_distiller_ms": null,
+    "burst_ok": 3,
+    "burst_total": 6,
+    "composite_score": 0.55,
+    "notes": ""
+  },
+  {
+    "model": "mistralai/mistral-small-4-119b-2603",
+    "provider": "nvidia",
+    "available": true,
+    "planner_pass_rate": 1.0,
+    "distiller_pass_rate": 1.0,
+    "median_planner_ms": 1066.02820000262,
+    "median_distiller_ms": 702.870900000562,
+    "burst_ok": 6,
+    "burst_total": 6,
+    "composite_score": 1.1429712909999943,
+    "notes": ""
+  },
+  {
+    "model": "qwen/qwen3.5-122b-a10b",
+    "provider": "nvidia",
+    "available": true,
+    "planner_pass_rate": 0.0,
+    "distiller_pass_rate": 1.0,
+    "median_planner_ms": null,
+    "median_distiller_ms": 2476.0513000001083,
+    "burst_ok": 5,
+    "burst_total": 6,
+    "composite_score": 0.6419061536666655,
+    "notes": ""
+  },
+  {
+    "model": "gemini-3.1-flash-lite",
+    "provider": "gemini",
+    "available": true,
+    "planner_pass_rate": 1.0,
+    "distiller_pass_rate": 1.0,
+    "median_planner_ms": 912.975400002324,
+    "median_distiller_ms": 5586.151499999687,
+    "burst_ok": 0,
+    "burst_total": 0,
+    "composite_score": 0.9941384850000031,
+    "notes": ""
+  }
+]
